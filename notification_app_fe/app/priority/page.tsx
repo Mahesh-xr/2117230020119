@@ -3,32 +3,31 @@
 import { useState, useEffect } from "react";
 import {
   Container, Typography, Box, Select, MenuItem,
-  FormControl, InputLabel, Pagination, CircularProgress, Alert
+  FormControl, InputLabel, CircularProgress, Alert, Slider
 } from "@mui/material";
+import Navbar from "../../components/Navbar";
+import NotificationCard from "../../components/NotificationCard";
+import { useNotifications } from "../../hooks/useNotifications";
+import { getTopN } from "../../utils/priorityScore";
+import { Log } from "../../utils/logger";
 
-import Navbar from "../components/NavBar";
-import NotificationCard from "../components/NotificationCard";
-import { useNotifications } from "../hooks/useNotification";
-import { Log } from "../utils/logger";
-
-export default function AllNotificationsPage() {
-  const [page, setPage] = useState(1);
+export default function PriorityPage() {
+  const [topN, setTopN] = useState(10);
   const [typeFilter, setTypeFilter] = useState("");
-  // tracking read IDs in localStorage so it persists across page navigations
   const [readIds, setReadIds] = useState<Set<string>>(new Set());
 
+  // fetch all so we can rank client side
   const { notifications, loading, error } = useNotifications({
-    page,
-    limit: 10,
     notification_type: typeFilter || undefined,
   });
 
-  // load read IDs from localStorage on mount
   useEffect(() => {
     const stored = localStorage.getItem("readNotifications");
     if (stored) setReadIds(new Set(JSON.parse(stored)));
-    Log("frontend", "info", "page", "All notifications page mounted");
+    Log("frontend", "info", "page", "Priority inbox page mounted");
   }, []);
+
+  const prioritized = getTopN(notifications, topN);
 
   const markAsRead = async (id: string) => {
     const updated = new Set(readIds).add(id);
@@ -36,26 +35,46 @@ export default function AllNotificationsPage() {
     localStorage.setItem("readNotifications", JSON.stringify([...updated]));
   };
 
-  const handleFilterChange = async (value: string) => {
-    await Log("frontend", "info", "page", `Filter changed to: ${value || "all"}`);
-    setTypeFilter(value);
-    setPage(1);
+  const handleTopNChange = async (_: Event, value: number | number[]) => {
+    const n = value as number;
+    await Log("frontend", "info", "page", `Top-N changed to ${n}`);
+    setTopN(n);
   };
 
   return (
     <>
       <Navbar />
       <Container maxWidth="md" sx={{ py: 3 }}>
-        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
-          <Typography variant="h5" fontWeight={700}>
-            All Notifications
-          </Typography>
+        <Typography variant="h5" fontWeight={700} mb={2}>
+          Priority Inbox
+        </Typography>
+
+        <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap", mb: 3, alignItems: "center" }}>
+          {/* slider to pick how many top notifications to show */}
+          <Box sx={{ width: 250 }}>
+            <Typography variant="body2" gutterBottom>
+              Show top {topN} notifications
+            </Typography>
+            <Slider
+              value={topN}
+              min={5}
+              max={20}
+              step={5}
+              marks
+              onChange={handleTopNChange}
+              valueLabelDisplay="auto"
+            />
+          </Box>
+
           <FormControl size="small" sx={{ minWidth: 150 }}>
             <InputLabel>Filter by Type</InputLabel>
             <Select
               value={typeFilter}
               label="Filter by Type"
-              onChange={(e) => handleFilterChange(e.target.value)}
+              onChange={(e) => {
+                Log("frontend", "info", "page", `Priority filter changed to ${e.target.value || "all"}`);
+                setTypeFilter(e.target.value);
+              }}
             >
               <MenuItem value="">All</MenuItem>
               <MenuItem value="Placement">Placement</MenuItem>
@@ -73,7 +92,7 @@ export default function AllNotificationsPage() {
 
         {error && <Alert severity="error">{error}</Alert>}
 
-        {!loading && !error && notifications.map(n => (
+        {!loading && !error && prioritized.map(n => (
           <NotificationCard
             key={n.ID}
             notification={n}
@@ -81,17 +100,6 @@ export default function AllNotificationsPage() {
             onRead={markAsRead}
           />
         ))}
-
-        {!loading && !error && (
-          <Box sx={{ display: "flex", justifyContent: "center", mt: 3 }}>
-            <Pagination
-              count={10}
-              page={page}
-              onChange={(_, val) => setPage(val)}
-              color="primary"
-            />
-          </Box>
-        )}
       </Container>
     </>
   );
