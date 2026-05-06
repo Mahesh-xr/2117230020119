@@ -35,6 +35,6 @@ export async function Log(
       }),
     });
   } catch (err) {
-    // silent fail — never let logging crash your app
+    // silent fail — never let logging crash app
   }
 }
