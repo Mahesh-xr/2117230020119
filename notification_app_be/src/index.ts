@@ -2,6 +2,7 @@ import { Log } from "../../logging_middleware/index";
 
 // token from registration, keeping it here for now
 const AUTH_TOKEN = process.env.ACCESS_TOKEN || "";
+
 const API_URL = "http://20.207.122.201/evaluation-service/notifications";
 
 // what a notification looks like from the API
@@ -49,13 +50,15 @@ function getScore(n: Notification, minTime: number, maxTime: number): number {
 async function getTopN(n: number): Promise<void> {
   try {
     await Log("backend", "info", "handler", `Fetching top ${n} notifications`);
-
+     
     // hitting the notifications API
     let res: Response;
     try {
       res = await fetch(API_URL, {
         headers: { Authorization: `Bearer ${AUTH_TOKEN}` },
       });
+
+      console.dir(`API response status: ${res.status}`);
     } catch (err) {
       await Log("backend", "fatal", "handler", `Network error while fetching notifications: ${err}`);
       return;
