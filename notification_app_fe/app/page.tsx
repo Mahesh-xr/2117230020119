@@ -6,7 +6,7 @@ import {
   FormControl, InputLabel, Pagination, CircularProgress, Alert
 } from "@mui/material";
 
-import Navbar from "../components/NavBar";
+import Navbar from "../components/Navbar";
 import NotificationCard from "../components/NotificationCard";
 import { useNotifications } from "../hooks/useNotification";
 import { Log } from "../utils/logger";
@@ -46,8 +46,8 @@ export default function AllNotificationsPage() {
     <>
       <Navbar />
       <Container maxWidth="md" sx={{ py: 3 }}>
-        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
-          <Typography variant="h5" fontWeight={700}>
+        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 3, flexWrap: "wrap", gap: 2 }}>
+          <Typography variant="h5" sx={{ fontWeight: 700, flex: 1, minWidth: "150px" }}>
             All Notifications
           </Typography>
           <FormControl size="small" sx={{ minWidth: 150 }}>
@@ -82,15 +82,19 @@ export default function AllNotificationsPage() {
           />
         ))}
 
-        {!loading && !error && (
+        {!loading && !error && notifications.length > 0 && (
           <Box sx={{ display: "flex", justifyContent: "center", mt: 3 }}>
             <Pagination
-              count={10}
+              count={Math.ceil((notifications.length + 990) / 10)}
               page={page}
               onChange={(_, val) => setPage(val)}
               color="primary"
             />
           </Box>
+        )}
+
+        {!loading && !error && notifications.length === 0 && (
+          <Alert severity="info">No notifications found</Alert>
         )}
       </Container>
     </>

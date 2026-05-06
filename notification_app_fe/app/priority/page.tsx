@@ -7,7 +7,7 @@ import {
 } from "@mui/material";
 import Navbar from "../../components/Navbar";
 import NotificationCard from "../../components/NotificationCard";
-import { useNotifications } from "../../hooks/useNotifications";
+import { useNotifications } from "../../hooks/useNotification";
 import { getTopN } from "../../utils/priorityScore";
 import { Log } from "../../utils/logger";
 
@@ -45,7 +45,7 @@ export default function PriorityPage() {
     <>
       <Navbar />
       <Container maxWidth="md" sx={{ py: 3 }}>
-        <Typography variant="h5" fontWeight={700} mb={2}>
+        <Typography variant="h5" sx={{ fontWeight: 700, mb: 3 }}>
           Priority Inbox
         </Typography>
 
